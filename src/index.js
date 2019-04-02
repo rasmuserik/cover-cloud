@@ -1,7 +1,7 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { Scene } from "@babylonjs/core/scene";
 import { Vector3 } from "@babylonjs/core/Maths/math";
-import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { FreeCamera } from "@babylonjs/core/Cameras/freeCamera";
 import { PointLight } from "@babylonjs/core/Lights/pointLight";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { SpriteManager } from "@babylonjs/core/Sprites/spriteManager";
@@ -30,12 +30,13 @@ async function getCover(pid) {
     return JSON.parse(await imageCache.get(pid));
   } catch (e) {
     console.log(e);
-    const { coverDataUrlFull } = (await window.dbcOpenPlatform.work({
+    const { coverDataUrl500 } = (await window.dbcOpenPlatform.work({
       pids: [pid],
-      fields: ["coverDataUrlFull"]
+      fields: ["coverDataUrl500"]
     }))[0];
-    const src = coverDataUrlFull && coverDataUrlFull[0];
+    const src = coverDataUrl500 && coverDataUrl500[0];
     if (!src) {
+      await imageCache.put(pid, 0);
       return null;
     }
     const { width, height } = await new Promise(resolve => {
@@ -59,7 +60,8 @@ async function getCover(pid) {
   console.log("got openplatform");
   console.log(await getCover("870970-basis:29644160"));
   let recommended = await window.dbcOpenPlatform.recommend({
-    like: ["870970-basis:29644160"],
+    //like: ["870970-basis:29644160"],
+    like: ["870970-basis:29841853"],
     limit: 100
   });
   recommended = await Promise.all(
@@ -92,14 +94,8 @@ var scene = new Scene(engine);
 async function createScene({ imgs }) {
   // Create camera and light
   var light = new PointLight("Point", new Vector3(5, 10, 5), scene);
-  var camera = new ArcRotateCamera(
-    "Camera",
-    1,
-    2,
-    14,
-    new Vector3(0, 0, 0),
-    scene
-  );
+  var camera = new FreeCamera("camera1", new Vector3(0, 2, 0), scene);
+  //  camera.setTarget(Vector3.Zero());
   camera.attachControl(canvas, true);
 
   for (let i = 0; i < imgs.length; ++i) {
@@ -114,9 +110,14 @@ async function createScene({ imgs }) {
       scene
     );
     const sprite = new Sprite("cover", spriteManager);
-    sprite.position.x = rnd() * 5;
-    sprite.position.y = rnd() * 2 + 2;
-    sprite.position.z = rnd() * 5;
+    let x, y, z;
+    do {
+      x = rnd() * 5;
+      y = rnd() * 1 + 2;
+      z = rnd() * 5;
+    } while(x*x + z*z < 4);
+    console.log(x, y, z);
+    sprite.position = {x,y,z}
     sprite.width = width / size;
     sprite.height = height / size;
   }
