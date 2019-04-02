@@ -10,6 +10,7 @@ import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { SimpleMaterial as Material } from "@babylonjs/materials/simple";
 import _ from "lodash";
 // createXXX methods from mesh
+import "@babylonjs/core/Helpers/sceneHelpers";
 import "@babylonjs/core/Meshes/meshBuilder";
 const levelup = require("levelup");
 const leveljs = require("level-js");
@@ -58,10 +59,10 @@ async function getCover(pid) {
     "4122efb022161deef3d812a92d309043ddd5c39fcbedaf92fb0240f326889077"
   );
   console.log("got openplatform");
-  console.log(await getCover("870970-basis:29644160"));
   let recommended = await window.dbcOpenPlatform.recommend({
     //like: ["870970-basis:29644160"],
-    like: ["870970-basis:29841853"],
+    //like: ["870970-basis:29841853"],
+    like: ["870970-basis:23726246"],
     limit: 100
   });
   recommended = await Promise.all(
@@ -88,8 +89,12 @@ function rnd() {
 }
 
 const canvas = document.getElementById("renderCanvas");
-const engine = new Engine(canvas);
+const engine = new Engine(canvas, true);
 var scene = new Scene(engine);
+var vrHelper = scene.createDefaultVRExperience({
+  createDeviceOrientationCamera: false,
+  useMultiview: true
+});
 
 async function createScene({ imgs }) {
   // Create camera and light
@@ -101,7 +106,7 @@ async function createScene({ imgs }) {
   for (let i = 0; i < imgs.length; ++i) {
     const width = imgs[i].width;
     const height = imgs[i].height;
-    const size = Math.sqrt(width * width + height * height);
+    const size = Math.sqrt(width * width + height * height) / 1.5;
     const spriteManager = new SpriteManager(
       "cover" + i,
       imgs[i].src,
@@ -115,9 +120,9 @@ async function createScene({ imgs }) {
       x = rnd() * 5;
       y = rnd() * 1 + 2;
       z = rnd() * 5;
-    } while(x*x + z*z < 4);
+    } while (x * x + z * z < 2);
     console.log(x, y, z);
-    sprite.position = {x,y,z}
+    sprite.position = { x, y, z };
     sprite.width = width / size;
     sprite.height = height / size;
   }
