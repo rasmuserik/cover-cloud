@@ -184,10 +184,10 @@ function updatePos() {
 
 async function main() {
   let pid;
-  pid = "870970-basis:29644160"; // borneboger
   pid = "870970-basis:22331892"; // hesse
   pid = "870970-basis:29841853"; // action movies
   pid = "870970-basis:23726246"; // allende
+  pid = "870970-basis:29644160"; // borneboger
 
   await initModel(pid);
 
