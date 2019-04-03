@@ -42,6 +42,7 @@ function ensureOpenplatform() {
     return openplatformRequest;
 }
 const _related = {};
+let relCount = 0;
 async function related(pid) {
   if(_related[pid]) {
     return _related[pid];
@@ -56,6 +57,7 @@ async function related(pid) {
     limit: 100
   });
       await relatedCache.put(pid, JSON.stringify(result));
+	  console.log(++relCount, 'related', pid);
   }
   _related[pid] = result;
   return result;
@@ -136,12 +138,12 @@ function updatePos() {
 
     const centerDistanceSq = p.lengthSquared();
     const gravity = p.clone().normalize()
-    gravity.scaleInPlace(-0.1/centerDistanceSq );
+    gravity.scaleInPlace(-1/centerDistanceSq );
     a.addInPlace(gravity);
-    a.y -= 0.0002 * p.y
+    a.y -= Math.max(0, 0.01 * p.y -1)
 
     const dampening = vs[i].clone();
-    dampening.scaleInPlace(-0.04);
+    dampening.scaleInPlace(-0.6);
     a.addInPlace(dampening);
 
 
@@ -150,7 +152,7 @@ function updatePos() {
         // spacing
         let d = p.subtract(ps[j])
         const distSq = p.lengthSquared(p);
-        let push = 20 - distSq
+        let push = 4 - distSq
         if(push > 0) {
           push = push * push * push * push;
           d.normalize()
@@ -161,7 +163,7 @@ function updatePos() {
         // attraction
         d = ps[j].subtract(p);
         d.normalize()
-        d.scaleInPlace(recMat[i][j] * 0.00002);
+        d.scaleInPlace(recMat[i][j] * 0.001);
         a.addInPlace(d)
       }
     }
@@ -176,7 +178,13 @@ function updatePos() {
 }
 
 async function main() {
-  await initModel("870970-basis:23726246");
+	let pid;
+	pid = "870970-basis:23726246" // allende
+pid = 	 "870970-basis:29644160" // borneboger
+	 pid = "870970-basis:22331892" // hesse
+	 pid ="870970-basis:29841853"  // action movies
+
+  await initModel(pid);
 
   console.time('scene');
   await createScene();
@@ -215,7 +223,7 @@ var vrHelper = scene.createDefaultVRExperience({
   for (let i = 0; i < covers.length; ++i) {
     const width = covers[i].width;
     const height = covers[i].height;
-    const size = Math.sqrt(width * width + height * height) / 1.5;
+    const size = Math.sqrt(width * width + height * height) * 1.5;
     const spriteManager = new SpriteManager(
       "cover" + i,
       covers[i].src,
@@ -231,7 +239,8 @@ var vrHelper = scene.createDefaultVRExperience({
 
   engine.runRenderLoop(() => {
     for(let i = 0; i < sprites.length; ++i) {
-      sprites[i].position = ps[i].add({x:0, y:1,z:0});
+	    const p = ps[i];
+      sprites[i].position = {x: p.x, y: p.y / 2 + 1.5, z: p.z}
     }
     updatePos()
     scene.render();
