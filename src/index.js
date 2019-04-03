@@ -88,6 +88,7 @@ async function getCover(pid) {
 let pids = [];
 let covers = [];
 let recommendations = [];
+let recMat = [];
 let sprites = []
 // positions, velocities, accelerations
 let ps = [], vs = [], as = [];
@@ -111,9 +112,21 @@ async function initModel(pid) {
   console.log(recommendations);
   console.timeEnd('recommend2');
 
-  ps = pids.map(o => new Vector3(rnd() * 10, rnd() * 10, rnd() * 10));
-  vs = pids.map(o => Vector3.Zero())
-  as = pids.map(o => Vector3.Zero())
+  recMat = pids.map(() => new Float64Array(pids.length));
+  for(let i = 0; i < recommendations.length; ++i) {
+    for(const o of recommendations[i]) {
+      const pos = pids.indexOf(o.pid) 
+      if(pos !== -1) {
+        recMat[i][pos] += o.val;
+        recMat[pos][i] += o.val;
+      }
+    }
+  }
+  console.log(recMat);
+
+  ps = pids.map(() => new Vector3(rnd() * 10, rnd() * 10, rnd() * 10));
+  vs = pids.map(() => Vector3.Zero())
+  as = pids.map(() => Vector3.Zero())
 }
 
 function updatePos() {
@@ -135,15 +148,21 @@ function updatePos() {
     for(let j = 0; j < pids.length; ++j) {
       if(i !== j) {
         // spacing
-        const d = p.subtract(ps[j])
+        let d = p.subtract(ps[j])
         const distSq = p.lengthSquared(p);
-        let push = 32 - distSq
+        let push = 20 - distSq
         if(push > 0) {
           push = push * push * push * push;
           d.normalize()
           d.scaleInPlace(push * 0.001)
           a.addInPlace(d)
         }
+
+        // attraction
+        d = ps[j].subtract(p);
+        d.normalize()
+        d.scaleInPlace(recMat[i][j] * 0.00002);
+        a.addInPlace(d)
       }
     }
     as[i] = a;
